@@ -1,0 +1,18 @@
+#!/bin/bash
+
+docker pull ankane/pgvector
+
+docker run -d \
+    --name demo-postgres \
+    -e POSTGRES_USER=postgres \
+    -e POSTGRES_PASSWORD=postgres \
+    -e POSTGRES_DB=demo \
+    -p 5432:5432 \
+    ankane/pgvector
+
+echo "waiting 5 seconds for postgres to start...."
+sleep 5
+
+docker exec -u postgres demo-postgres psql -d demo -c "create extension if not exists vector;"
+
+echo "pg_vector is ready!"
