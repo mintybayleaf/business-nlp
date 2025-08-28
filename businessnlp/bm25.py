@@ -78,3 +78,8 @@ if __name__ == "__main__":
     print()
     print("demo similar names")
     bm25_demo(data.load_text_file("similar_company_names"))
+    print()
+    print("===================================")
+    print()
+    print("demo semantics")
+    bm25_demo(data.load_text_file("semantic_words"))
