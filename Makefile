@@ -7,6 +7,18 @@ VENV := .venv
 
 all: setup
 
+tfidf:
+	python -m businessnlp.tfidf
+
+bm25:
+	python -m businessnlp.bm25
+
+embeddings:
+	python -m businessnlp.embeddings
+
+semantics:
+	python -m businessnlp.semantics
+
 .PHONY: setup
 setup: $(VENV)/.sentinel
 	@echo "dependencies installed"

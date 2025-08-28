@@ -85,7 +85,6 @@ def normalize(string):
         transliteration,
         accent_folding,
         tokenize,
-        stemmer,
         remove_stopwords,
     ]
     result = string
@@ -95,12 +94,19 @@ def normalize(string):
 
 
 if __name__ == "__main__":
+    print()
+    print("tokenize")
+    print("a very long string, with something     here.")
     print(tokenize("a very long string, with something     here."))
+    print()
+    print("accent folding")
+    print("Café, Résumé, Español, StäVänger")
     print(accent_folding("Café, Résumé, Español, StäVänger"))
+    print()
+    print("stemming")
+    print("bailey loves dancing with zebras in the evening")
     print(stemmer(tokenize("bailey loves dancing with zebras in the evening")))
+    print()
+    print("transliteration")
+    print("上海贸易公司")
     print(transliteration("上海贸易公司"))
-    print(
-        normalize(
-            "bailey loves dancing near the Café 上海贸易公司 CoMpAnY at dawn while he sings in Español"
-        )
-    )

@@ -1,35 +1,13 @@
 from collections import Counter
 import math
+import random
 
 import numpy as np
 
 
 from businessnlp.normalize import normalize
 import businessnlp.sql as sql
-
-
-def load_business_names_similar():
-    with open("./resources/business_names_similar.txt", "r") as file:
-        content = file.read()
-        return content.splitlines()
-
-
-def load_business_names_similar_mixed():
-    with open("./resources/business_names_similar_mixed.txt", "r") as file:
-        content = file.read()
-        return content.splitlines()
-
-
-def load_business_names_mixed():
-    with open("./resources/business_names_mixed.txt", "r") as file:
-        content = file.read()
-        return content.splitlines()
-
-
-def load_business_semantices():
-    with open("./resources/semantic_words.txt", "r") as file:
-        content = file.read()
-        return content.splitlines()
+import businessnlp.data as data
 
 
 def term_frequency_map(tokens):
@@ -90,8 +68,7 @@ def tfidf(names):
     return vectors, vocabulary
 
 
-def tfidf_demo():
-    names = load_business_names_similar_mixed()
+def tfidf_demo(names):
     vectors, vocabulary = tfidf(names)
 
     table_name = "tfidf_demo"
@@ -116,9 +93,18 @@ def tfidf_demo():
         names[9500],
     ]
     for name, vector in zip(sample_names, sample_vectors):
-        for result in sql.cosine_distance_nearest_vectors(table_name, vector, 10):
+        for result in sql.cosine_distance_nearest_vectors(table_name, vector, 3):
             print(f"[cosine distance] {name} => {result}")
 
 
 if __name__ == "__main__":
-    tfidf_demo()
+    print()
+    print("===================================")
+    print()
+    print("demo company names")
+    tfidf_demo(random.sample(data.load_text_file("company_names"), 10000))
+    print()
+    print("===================================")
+    print()
+    print("demo similar names")
+    tfidf_demo(data.load_text_file("similar_company_names"))

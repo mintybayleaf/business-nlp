@@ -1,5 +1,8 @@
 #!/bin/bash
 
+docker stop container demo-postgres
+docker container rm demo-postgres
+
 docker pull ankane/pgvector
 
 docker run -d \
