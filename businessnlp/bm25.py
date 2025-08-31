@@ -129,4 +129,37 @@ def demo(sample_size=1000):
 
 
 if __name__ == "__main__":
+    print()
+    print(
+        """
+        BM25
+            An improved version of TF-IDF that not only scores word importance but also accounts for document length and how often a word appears before it stops adding much value.
+            It’s designed specifically for ranking search results more effectively.
+
+        Tiny Example:
+
+            Documents:
+                doc1 = "urgent care center"
+                doc2 = "medical care clinic"
+
+            Step 1: tokenize and normalize
+                doc1 tokens: ['urgent', 'care', 'center']
+                doc2 tokens: ['medical', 'care', 'clinic']
+
+            Step 2: compute BM25 score for a query
+                Query: "urgent care"
+                For doc1:
+                    'urgent' appears once → weighted score based on frequency and doc length
+                    'care' appears once → weighted score
+                    Total BM25 score = sum of weighted scores
+                For doc2:
+                    'urgent' not present → contributes 0
+                    'care' appears once → weighted score
+                    Total BM25 score lower than doc1
+
+        Trigrams: measures surface-level string overlap
+        Tokens: measures semantic / word-level overlap
+    """
+    )
+    print()
     demo(sample_size=2000)

@@ -130,4 +130,38 @@ def demo(sample_size=1000, visualize=False):
 
 
 if __name__ == "__main__":
+    print()
+    print(
+        """
+        TF-IDF (Term Frequency–Inverse Document Frequency)
+            A simple way to turn text into numbers by counting how often words appear, while removing the importance of very common words like “the” or “and.”
+            It highlights words that are important for distinguishing one document from another.
+
+        Example:
+
+            Documents:
+                doc1 = "urgent care center"
+                doc2 = "medical care clinic"
+
+            Step 1: tokenize and normalize
+                doc1 tokens: ['urgent', 'care', 'center']
+                doc2 tokens: ['medical', 'care', 'clinic']
+
+            Step 2: compute term frequencies (TF)
+                doc1 TF: {'urgent': 1/3, 'care': 1/3, 'center': 1/3}
+                doc2 TF: {'medical': 1/3, 'care': 1/3, 'clinic': 1/3}
+
+            Step 3: compute inverse document frequency (IDF)
+                'care': appears in 2 docs → low IDF
+                'urgent', 'center', 'medical', 'clinic': appear in 1 doc → higher IDF
+
+            Step 4: multiply TF * IDF to get TF-IDF vectors
+                doc1 TF-IDF: [urgent: high, care: low, center: high]
+                doc2 TF-IDF: [medical: high, care: low, clinic: high]
+
+        Trigrams: measures surface-level string overlap
+        Tokens: measures semantic / word-level overlap
+"""
+    )
+    print()
     demo(sample_size=2000)

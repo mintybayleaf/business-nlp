@@ -149,4 +149,44 @@ def demo(sample_size=1000, queries=5, top_n=10, visualize=False):
 #     Trigrams → more like a “fuzzy string similarity” map
 
 if __name__ == "__main__":
+    print()
+    print(
+        """
+        Embeddings....What are they? It is a word people use a lot....
+
+        Instead of just counting words, embeddings use deep learning to map words or sentences into high-dimensional vectors that capture meaning.
+        This lets the model know that “urgent care” is more similar to “medical clinic” than to “car repair,” even if the words don’t overlap.
+
+
+        Example:
+
+            Documents:
+                doc1 = "urgent care"
+                doc2 = "medical clinic"
+
+            Step 1: tokenize and normalize
+                doc1 tokens: ['urgent', 'care']
+                doc2 tokens: ['medical', 'clinic']
+
+            Step 2a: Token embeddings (semantic)
+                embed("urgent") = [vector for 'urgent']
+                embed("care") = [vector for 'care']
+                Mean-pool: embedding_doc1 = mean([embed("urgent"), embed("care")])
+                embed("medical") = ...
+                embed("clinic") = ...
+                Mean-pool: embedding_doc2 = mean([embed("medical"), embed("clinic")])
+                Result: doc1 is closer to doc2 than to an unrelated phrase like "car repair"
+
+            Step 2b: Trigram embeddings (string overlap)
+                doc1 trigrams: ['urg', 'rge', 'gen', 'ent', 'car', 'are']
+                doc2 trigrams: ['med', 'edi', 'dic', 'ica', 'cal', 'cli', 'lin', 'nic']
+                embed each trigram → mean-pool
+                Result: doc1 and doc2 vectors capture **character-level similarity**, more sensitive to typos or shared substrings
+
+        BERT embeddings:
+            Tokens → capture semantic similarity
+            Trigrams → capture surface-level or “fuzzy string” similarity
+"""
+    )
+    print()
     demo(sample_size=2000, queries=3, top_n=5)
