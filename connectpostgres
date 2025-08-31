@@ -1,0 +1,4 @@
+#!/bin/bash
+
+
+docker exec -it demo-postgres bash -c "psql -U postgres -d demo"

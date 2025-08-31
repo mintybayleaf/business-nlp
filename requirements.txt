@@ -7,3 +7,4 @@ pandas
 requests
 torch>=2.0.0         # PyTorch
 transformers>=4.40.0 # Hugging Face Transformers
+scikit-learn

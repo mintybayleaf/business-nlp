@@ -4,19 +4,14 @@ import random
 
 import numpy as np
 
-
-from businessnlp.normalize import normalize
+from businessnlp.normalize import normalize, make_ngrams
 import businessnlp.sql as sql
 import businessnlp.data as data
+from businessnlp.graph import plot_vectors_2d
 
 
 def term_frequency_map(tokens):
     return Counter(tokens)
-
-
-def generate_ngram_tokens(tokens, ngram=3):
-    combined = "".join(tokens)
-    return [combined[i : i + ngram] for i in range(len(combined) - (ngram - 1))]
 
 
 def term_frequency(term, tokenized_document):
@@ -35,21 +30,34 @@ def inverse_document_frequency(term, document_frequency, total_documents):
     return math.log10(1 + total_documents / (document_frequency[term] + 1)) + 1
 
 
-def tfidf(names):
-    normalized_tokens = [normalize(name) for name in names]
+def tfidf(names, mode="tokens", ngram_size=3):
+    """
+    Compute TF-IDF vectors for a list of names.
+    mode = "tokens" (word-level tokens after normalize)
+         or "ngrams" (character-level ngrams of size ngram_size).
+    """
 
-    # Corpus is all the n-grams
-    corpus = [generate_ngram_tokens(tokens) for tokens in normalized_tokens]
+    if mode == "tokens":
+        # Get normalized list of tokens
+        corpus = [normalize(name, return_tokens=True) for name in names]
+    elif mode == "ngrams":
+        # Character n-grams
+        collapsed = [normalize(name) for name in names]
+        corpus = [make_ngrams(list(doc), n=ngram_size) for doc in collapsed]
+
+    else:
+        raise ValueError(f"Unknown mode {mode}")
+
     total_documents = len(corpus)
 
-    # Frequency mapping from term to document its in for IDF
+    # Frequency mapping from term to number of docs it appears in
     document_frequency = document_frequency_map(corpus)
 
-    # Ordered list of terms so we can compute all the vectors in the same order
+    # Vocabulary and term index mapping
     vocabulary = sorted(list(document_frequency.keys()))
     terms = {term: i for i, term in enumerate(vocabulary)}
 
-    # Compute the TF-IDF for each document in the corpus
+    # Compute TF-IDF vectors
     vectors = []
     for tokenized_document in corpus:
         vector = np.zeros(len(vocabulary), dtype=np.float64)
@@ -59,7 +67,7 @@ def tfidf(names):
             term_idx = terms[term]
             vector[term_idx] += tf * idf
 
-        # Store normalized vectors
+        # Normalize vector
         norm = np.linalg.norm(vector)
         if norm > 0:
             vector /= norm
@@ -69,42 +77,57 @@ def tfidf(names):
 
 
 def tfidf_demo(names):
-    vectors, vocabulary = tfidf(names)
+    """
+    Demo TF-IDF using both token-level and n-gram-level normalization.
+    Inserts into SQL and shows cosine similarity results.
+    """
 
-    table_name = "tfidf_demo"
+    # Tokens demo
+    print("\n=== TF-IDF demo (tokens) ===\n")
+    vectors, vocabulary = tfidf(names, mode="tokens")
+
+    table_name = "tfidf_demo_tokens"
     sql.setup_table(table_name, len(vocabulary))
     for name, vector in zip(names, vectors):
         sql.insert_np_array(table_name, name, vector)
 
-    sample_vectors = [
-        vectors[0],
-        vectors[20],
-        vectors[1000],
-        vectors[5000],
-        vectors[7500],
-        vectors[9500],
-    ]
-    sample_names = [
-        names[0],
-        names[20],
-        names[1000],
-        names[5000],
-        names[7500],
-        names[9500],
-    ]
-    for name, vector in zip(sample_names, sample_vectors):
+    sample_indices = random.sample(list(range(len(names))), 5)
+    for idx in sample_indices:
+        name, vector = names[idx], vectors[idx]
         for result in sql.cosine_distance_nearest_vectors(table_name, vector, 3):
-            print(f"[cosine distance] {name} => {result}")
+            print(f"[tokens cosine] {name} => {result}")
+
+    # N-grams (trigram mode)
+    print("\n=== TF-IDF demo (character trigrams) ===\n")
+    vectors, vocabulary = tfidf(names, mode="ngrams", ngram_size=3)
+
+    table_name = "tfidf_demo_ngrams"
+    sql.setup_table(table_name, len(vocabulary))
+    for name, vector in zip(names, vectors):
+        sql.insert_np_array(table_name, name, vector)
+
+    for idx in sample_indices:
+        name, vector = names[idx], vectors[idx]
+        for result in sql.cosine_distance_nearest_vectors(table_name, vector, 3):
+            print(f"[ngrams cosine] {name} => {result}")
+
+
+def demo(sample_size=1000, visualize=False):
+    print()
+    print("===================================")
+    print("Demo company names")
+    tfidf_demo(random.sample(data.load_text_file("company_names"), sample_size))
+    print()
+    print("===================================")
+    print("Demo similar names")
+    tfidf_demo(random.sample(data.load_text_file("similar_company_names"), sample_size))
+
+    if visualize:
+        vectors, names = tfidf(
+            random.sample(data.load_text_file("company_names"), 200), mode="tokens"
+        )
+        plot_vectors_2d(vectors, names, title="TF-IDF Token Vectors")
 
 
 if __name__ == "__main__":
-    print()
-    print("===================================")
-    print()
-    print("demo company names")
-    tfidf_demo(random.sample(data.load_text_file("company_names"), 10000))
-    print()
-    print("===================================")
-    print()
-    print("demo similar names")
-    tfidf_demo(data.load_text_file("similar_company_names"))
+    demo(sample_size=2000)
