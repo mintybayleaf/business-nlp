@@ -7,6 +7,9 @@ VENV := .venv
 
 all: setup
 
+normalize:
+	python -m businessnlp.normalize
+
 tfidf:
 	python -m businessnlp.tfidf
 
@@ -15,9 +18,6 @@ bm25:
 
 embeddings:
 	python -m businessnlp.embeddings
-
-semantics:
-	python -m businessnlp.semantics
 
 .PHONY: setup
 setup: $(VENV)/.sentinel
