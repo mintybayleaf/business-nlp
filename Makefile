@@ -19,6 +19,9 @@ bm25:
 embeddings:
 	python -m businessnlp.embeddings
 
+comparison:
+	python -m businessnlp.comparison
+
 .PHONY: setup
 setup: $(VENV)/.sentinel
 	@echo "dependencies installed"
