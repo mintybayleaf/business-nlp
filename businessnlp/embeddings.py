@@ -1,3 +1,4 @@
+from nltk.corpus.reader import WordListCorpusReader
 import torch
 from transformers import AutoTokenizer, AutoModel
 import numpy as np
@@ -81,112 +82,96 @@ def embeddings_demo(names, mode="tokens", ngram_size=3, sample_size=5, top_n=10)
     table_name = f"embeddings_demo_{mode}"
     sql.setup_table(table_name, vectors[0].size)
     for name, vector in zip(names, vectors):
-        sql.insert_np_array(table_name, name, vector)
+        normalized_name = " ".join(normalize(name, return_tokens=True))
+        sql.insert_np_array(table_name, normalized_name, vector)
 
     sample_indices = random.sample(range(len(names)), min(sample_size, len(names)))
     for idx in sample_indices:
         query_name = names[idx]
+        normalized_query_name = " ".join(normalize(query_name, return_tokens=True))
         query_vector = vectors[idx]
-        print(f"\n[cosine distance] query='{query_name}'")
+        print(f"\n[cosine distance] query='{normalized_query_name}'")
         for result in sql.cosine_distance_nearest_vectors(
             table_name, query_vector, top_n
         ):
             print(result)
 
 
-def demo(sample_size=1000, queries=5, top_n=10, visualize=False):
-    companies = random.sample(data.load_text_file("company_names"), sample_size)
-    similar = random.sample(data.load_text_file("similar_company_names"), sample_size)
-    semantic = random.sample(data.load_text_file("semantic_words"), sample_size)
+def demo(sample_size=None, queries=2, top_n=3):
+    if sample_size is None:
+        words = data.load_text_file("companies")
+        overlaps = data.load_text_file("company_overlaps")
+        spelling_variations = data.load_text_file("company_variations")
+        semantic = data.load_text_file("semantics")
+    else:
+        words = random.sample(data.load_text_file("companies"), sample_size)
+        overlaps = random.sample(data.load_text_file("company_overlaps"), sample_size)
+        spelling_variations = random.sample(data.load_text_file("company_variations"), sample_size)
+        semantic =  random.sample(data.load_text_file("semantics"), sample_size)
 
-    print("\n===================================")
-    print("Demo company names (token-level embeddings)")
-    embeddings_demo(companies, mode="tokens", sample_size=queries, top_n=top_n)
+    print()
+    print("embeddings normal demo")
+    print("--------------------------------")
+    print("\nwhole word tokens\n")
+    embeddings_demo(words, mode="tokens", sample_size=queries, top_n=top_n)
+    print()
+    print("--------------------------------")
+    print("\ncharacter trigrams\n")
+    embeddings_demo(words, mode="ngrams",  ngram_size=3, sample_size=queries, top_n=top_n)
+    print()
 
-    print("\n===================================")
-    print("Demo company names (character n-gram embeddings)")
-    embeddings_demo(
-        companies, mode="ngrams", ngram_size=3, sample_size=queries, top_n=top_n
-    )
+    print()
+    print("embeddings overlaps demo")
+    print("--------------------------------")
+    print("\nwhole word tokens\n")
+    embeddings_demo(overlaps, mode="tokens", sample_size=queries, top_n=top_n)
+    print()
+    print("--------------------------------")
+    print("\ncharacter trigrams\n")
+    embeddings_demo(overlaps, mode="ngrams",  ngram_size=3, sample_size=queries, top_n=top_n)
+    print()
 
-    print("\n===================================")
-    print("Demo similar names (token-level embeddings)")
-    embeddings_demo(similar, mode="tokens", sample_size=5, top_n=top_n)
+    print()
+    print("embeddings spelling variations demo")
+    print("--------------------------------")
+    print("\nwhole word tokens\n")
+    embeddings_demo(spelling_variations, mode="tokens", sample_size=queries, top_n=top_n)
+    print()
+    print("--------------------------------")
+    print("\ncharacter trigrams\n")
+    embeddings_demo(spelling_variations, mode="ngrams",  ngram_size=3, sample_size=queries, top_n=top_n)
+    print()
 
-    print("\n===================================")
-    print("Demo similar names (character n-gram embeddings)")
-    embeddings_demo(
-        similar, mode="ngrams", ngram_size=3, sample_size=queries, top_n=top_n
-    )
-
-    print("\n===================================")
-    print("Demo semantic names (token-level embeddings)")
-    embeddings_demo(semantic, mode="tokens", sample_size=5, top_n=top_n)
-
-    print("\n===================================")
-    print("Demo semantic names (character n-gram embeddings)")
-    embeddings_demo(
-        semantic, mode="ngrams", ngram_size=3, sample_size=queries, top_n=top_n
-    )
-
-    if visualize:
-        vectors, names = generate_embeddings(
-            random.sample(data.load_text_file("company_names"), 200), mode="ngrams"
-        )
-        plot_vectors_2d(vectors, names, title="BERT Embeddings (trigrams)")
+    print()
+    print("embeddings semantic demo")
+    print("--------------------------------")
+    print("\nwhole word tokens\n")
+    embeddings_demo(semantic, mode="tokens", sample_size=queries, top_n=top_n)
+    print()
+    print("--------------------------------")
+    print("\ncharacter trigrams\n")
+    embeddings_demo(semantic, mode="ngrams",  ngram_size=3, sample_size=queries, top_n=top_n)
+    print()
 
 
 # Embeddings example
 # "urgent care" → [embed("urgent"), embed("care")] → mean-pool → embedding for whole name
 # "urgent care" → ["urg","rge","gen","ent","car","are"] → embed each → mean-pool → embedding
 
-# TF-IDF / BM25 with trigrams vs tokens
-#   Trigrams: measures surface-level string overlap
-#   Tokens: measures semantic / word-level overlap
-
-# BERT embeddings:
-#     Tokens → semantic similarity
-#     Trigrams → more like a “fuzzy string similarity” map
-
 if __name__ == "__main__":
     print()
     print(
         """
-        Embeddings....What are they? It is a word people use a lot....
+Embeddings....What are they? It is a word people use a lot....
 
-        Instead of just counting words, embeddings use deep learning to map words or sentences into high-dimensional vectors that capture meaning.
-        This lets the model know that “urgent care” is more similar to “medical clinic” than to “car repair,” even if the words don’t overlap.
+Instead of just counting words, embeddings use deep learning to map words or sentences into high-dimensional vectors that capture meaning.
+This lets the model know that “urgent care” is more similar to “medical clinic” than to “car repair,” even if the words don’t overlap.
 
+BERT embeddings
 
-        Example:
-
-            Documents:
-                doc1 = "urgent care"
-                doc2 = "medical clinic"
-
-            Step 1: tokenize and normalize
-                doc1 tokens: ['urgent', 'care']
-                doc2 tokens: ['medical', 'clinic']
-
-            Step 2a: Token embeddings (semantic)
-                embed("urgent") = [vector for 'urgent']
-                embed("care") = [vector for 'care']
-                Mean-pool: embedding_doc1 = mean([embed("urgent"), embed("care")])
-                embed("medical") = ...
-                embed("clinic") = ...
-                Mean-pool: embedding_doc2 = mean([embed("medical"), embed("clinic")])
-                Result: doc1 is closer to doc2 than to an unrelated phrase like "car repair"
-
-            Step 2b: Trigram embeddings (string overlap)
-                doc1 trigrams: ['urg', 'rge', 'gen', 'ent', 'car', 'are']
-                doc2 trigrams: ['med', 'edi', 'dic', 'ica', 'cal', 'cli', 'lin', 'nic']
-                embed each trigram → mean-pool
-                Result: doc1 and doc2 vectors capture **character-level similarity**, more sensitive to typos or shared substrings
-
-        BERT embeddings:
-            Tokens → capture semantic similarity
-            Trigrams → capture surface-level or “fuzzy string” similarity
+Tokens → capture semantic similarity
+Trigrams → capture surface-level or “fuzzy string” similarity
 """
     )
     print()
-    demo(sample_size=2000, queries=3, top_n=5)
+    demo(queries=2, top_n=3)

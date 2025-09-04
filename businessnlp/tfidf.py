@@ -76,92 +76,90 @@ def tfidf(names, mode="tokens", ngram_size=3):
     return vectors, vocabulary
 
 
-def tfidf_demo(names):
+def tfidf_demo(names, query_size=2):
     """
     Demo TF-IDF using both token-level and n-gram-level normalization.
     Inserts into SQL and shows cosine similarity results.
     """
 
     # Tokens demo
-    print("\n=== TF-IDF demo (tokens) ===\n")
+    print("\nwhole word tokens")
     vectors, vocabulary = tfidf(names, mode="tokens")
 
     table_name = "tfidf_demo_tokens"
     sql.setup_table(table_name, len(vocabulary))
     for name, vector in zip(names, vectors):
-        sql.insert_np_array(table_name, name, vector)
+        normalized_name = " ".join(normalize(name, return_tokens=True))
+        sql.insert_np_array(table_name, normalized_name, vector)
 
-    sample_indices = random.sample(list(range(len(names))), 5)
+    sample_indices = random.sample(list(range(len(names))), query_size)
     for idx in sample_indices:
         name, vector = names[idx], vectors[idx]
+        normalized_name = " ".join(normalize(name, return_tokens=True))
+        print(f"\n[cosine distance] query='{normalized_name}'")
         for result in sql.cosine_distance_nearest_vectors(table_name, vector, 3):
-            print(f"[tokens cosine] {name} => {result}")
+            print(result)
 
     # N-grams (trigram mode)
-    print("\n=== TF-IDF demo (character trigrams) ===\n")
+    print("\ncharacter trigrams")
     vectors, vocabulary = tfidf(names, mode="ngrams", ngram_size=3)
 
     table_name = "tfidf_demo_ngrams"
     sql.setup_table(table_name, len(vocabulary))
     for name, vector in zip(names, vectors):
-        sql.insert_np_array(table_name, name, vector)
+        normalized_name = " ".join(normalize(name, return_tokens=True))
+        sql.insert_np_array(table_name, normalized_name, vector)
 
     for idx in sample_indices:
         name, vector = names[idx], vectors[idx]
+        normalized_name = " ".join(normalize(name, return_tokens=True))
+        print(f"\n[cosine distance] query='{normalized_name}'")
         for result in sql.cosine_distance_nearest_vectors(table_name, vector, 3):
-            print(f"[ngrams cosine] {name} => {result}")
+            print(result)
 
 
-def demo(sample_size=1000, visualize=False):
+def demo(sample_size=None, query_size=2):
+
+
+    if sample_size is None:
+        words = data.load_text_file("companies")
+        overlaps = data.load_text_file("company_overlaps")
+        spelling_variations = data.load_text_file("company_variations")
+    else:
+        words = random.sample(data.load_text_file("companies"), sample_size)
+        overlaps = random.sample(data.load_text_file("company_overlaps"), sample_size)
+        spelling_variations = random.sample(data.load_text_file("company_variations"), sample_size)
+
     print()
-    print("===================================")
-    print("Demo company names")
-    tfidf_demo(random.sample(data.load_text_file("company_names"), sample_size))
+    print("tfidf normal demo")
+    print("--------------------------------")
+    tfidf_demo(words, query_size=query_size)
     print()
-    print("===================================")
-    print("Demo similar names")
-    tfidf_demo(random.sample(data.load_text_file("similar_company_names"), sample_size))
 
-    if visualize:
-        vectors, names = tfidf(
-            random.sample(data.load_text_file("company_names"), 200), mode="tokens"
-        )
-        plot_vectors_2d(vectors, names, title="TF-IDF Token Vectors")
+    print()
+    print("tfidf overlap demo")
+    print("--------------------------------")
+    tfidf_demo(overlaps, query_size=query_size)
+    print()
 
+    print()
+    print("tfidf spelling variations demo")
+    print("--------------------------------")
+    tfidf_demo(spelling_variations, query_size=query_size)
+    print()
 
 if __name__ == "__main__":
     print()
     print(
         """
-        TF-IDF (Term Frequency–Inverse Document Frequency)
-            A simple way to turn text into numbers by counting how often words appear, while removing the importance of very common words like “the” or “and.”
-            It highlights words that are important for distinguishing one document from another.
+TF-IDF (Term Frequency–Inverse Document Frequency)
 
-        Example:
+A simple way to turn text into numbers by counting how often words appear, while removing the importance of very common words like “the” or “and.”
+It highlights words that are important for distinguishing one document from another.
 
-            Documents:
-                doc1 = "urgent care center"
-                doc2 = "medical care clinic"
-
-            Step 1: tokenize and normalize
-                doc1 tokens: ['urgent', 'care', 'center']
-                doc2 tokens: ['medical', 'care', 'clinic']
-
-            Step 2: compute term frequencies (TF)
-                doc1 TF: {'urgent': 1/3, 'care': 1/3, 'center': 1/3}
-                doc2 TF: {'medical': 1/3, 'care': 1/3, 'clinic': 1/3}
-
-            Step 3: compute inverse document frequency (IDF)
-                'care': appears in 2 docs → low IDF
-                'urgent', 'center', 'medical', 'clinic': appear in 1 doc → higher IDF
-
-            Step 4: multiply TF * IDF to get TF-IDF vectors
-                doc1 TF-IDF: [urgent: high, care: low, center: high]
-                doc2 TF-IDF: [medical: high, care: low, clinic: high]
-
-        Trigrams: measures surface-level string overlap
-        Tokens: measures semantic / word-level overlap
+Trigrams: measures surface-level string overlap
+Tokens: measures semantic / word-level overlap
 """
     )
     print()
-    demo(sample_size=2000)
+    demo()

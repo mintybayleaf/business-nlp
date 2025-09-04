@@ -58,46 +58,6 @@ class BM25:
                 vec[term_idx[term]] = self.score([term], i)
             vectors.append(vec)
         return np.array(vectors), vocabulary
-
-
-def plot_vectors_2d(vectors, labels, title="Vector Space", sample_size=100):
-    """
-    Reduce vectors to 2D using t-SNE and plot with Plotly (interactive).
-    Hover over points to see labels.
-    """
-    # Subsample if too many
-    if len(vectors) > sample_size:
-        indices = random.sample(range(len(vectors)), sample_size)
-        vectors = np.array([vectors[i] for i in indices])
-        labels = [labels[i] for i in indices]
-    else:
-        vectors = np.array(vectors)
-
-    # Squish high-dimensional vectors down to 2D
-    vectors_2d = TSNE(n_components=2, random_state=42).fit_transform(vectors)
-
-    # Interactive scatter plot
-    fig = px.scatter(
-        x=vectors_2d[:, 0],
-        y=vectors_2d[:, 1],
-        text=labels,        # labels appear on hover
-        hover_name=labels,  # also shows in hover box
-        title=title,
-        width=900,
-        height=600
-    )
-
-    # Style adjustments
-    fig.update_traces(marker=dict(size=10, opacity=0.7, line=dict(width=1, color="DarkSlateGrey")))
-    fig.update_layout(
-        xaxis=dict(showticklabels=False, zeroline=False),
-        yaxis=dict(showticklabels=False, zeroline=False)
-    )
-
-    fig.show()
-
-
-
 def prepare_vectors(names, mode="tfidf", tokens=False):
     """
     Compute vectors for TF-IDF, BM25, or BERT embeddings.
@@ -116,13 +76,11 @@ def prepare_vectors(names, mode="tfidf", tokens=False):
     return vectors
 
 
-def vector_space_demo(tokens=False):
-    names = data.load_text_file("demo_names")
-
+def vector_space_demo(names, tokens=False, file_name=None):
     # Helper: reduce high-dimensional vectors to 2D
-    def reduce(vectors, sample_size=50):
-        if len(vectors) > sample_size:
-            indices = random.sample(range(len(vectors)), sample_size)
+    def reduce(vectors):
+        if len(vectors) > 0:
+            indices = range(len(vectors))
             vectors = np.array([vectors[i] for i in indices])
             labels = [names[i] for i in indices]
         else:
@@ -142,10 +100,16 @@ def vector_space_demo(tokens=False):
     emb_2d, emb_labels = reduce(embedding_vecs)
 
     # Make subplot grid (1 row, 3 columns)
-    fig = make_subplots(
-        rows=1, cols=3,
-        subplot_titles=("TF-IDF Token Vectors", "BM25 Token Vectors", "BERT Embeddings")
-    )
+    if tokens:
+        fig = make_subplots(
+            rows=1, cols=3,
+            subplot_titles=("TF-IDF Token Vectors", "BM25 Token Vectors", "BERT Embeddings")
+        )
+    else:
+        fig = make_subplots(
+            rows=1, cols=3,
+            subplot_titles=("TF-IDF Trigram Vectors", "BM25 Trigram Vectors", "BERT Embeddings")
+        )
 
     # Add scatter plots with hover labels
     fig.add_trace(
@@ -180,8 +144,8 @@ def vector_space_demo(tokens=False):
 
     # Layout tweaks
     fig.update_layout(
-        title="Comparison of Business Name Vector Spaces",
-        height=1080, width=1920,
+        title=f"Comparison of {file_name if file_name else 'Text'} Vector Spaces ({'Token' if tokens else 'Trigram'} Vectors)",
+        height=1200, width=2400,
         showlegend=True
     )
     fig.update_xaxes(showticklabels=False)
@@ -194,5 +158,14 @@ def vector_space_demo(tokens=False):
 # that things that are ‘neighbors’ in the original space stay neighbors in the map
 
 if __name__ == "__main__":
-    vector_space_demo(tokens=True)
-    vector_space_demo(tokens=False)
+    company_names = data.load_text_file("company_overlaps")
+    vector_space_demo(company_names, tokens=True, file_name="overlaps")
+    vector_space_demo(company_names, tokens=False, file_name="overlaps")
+
+    similar_names = data.load_text_file("company_variations")
+    vector_space_demo(similar_names, tokens=True, file_name="spelling variations")
+    vector_space_demo(similar_names, tokens=False, file_name="spelling variations")
+
+    semantic_names = data.load_text_file("semantics")
+    vector_space_demo(semantic_names, tokens=True, file_name="semantic")
+    vector_space_demo(semantic_names, tokens=False, file_name="semantic")

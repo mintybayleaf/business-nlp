@@ -78,7 +78,7 @@ def bm25_prepare(names, mode="tokens", ngram_size=3):
     return corpus
 
 
-def bm25_demo(names, mode="tokens", ngram_size=3, sample_size=5, top_n=3):
+def bm25_demo(names, mode="tokens", ngram_size=3, sample_size=2, top_n=3):
     """
     Demo BM25 ranking similar to your TF-IDF demo.
     - names: list of business names (strings)
@@ -95,7 +95,7 @@ def bm25_demo(names, mode="tokens", ngram_size=3, sample_size=5, top_n=3):
     sample_queries = random.sample(names, min(sample_size, len(names)))
 
     print(
-        f"\n=== BM25 demo ({'char ' + str(ngram_size) + '-grams' if mode=='ngrams' else 'tokens'}) ===\n"
+        f"\nbm25 ({'char ' + str(ngram_size) + '-grams' if mode=='ngrams' else 'tokens'})\n"
     )
     for query in sample_queries:
         if mode == "tokens":
@@ -103,63 +103,60 @@ def bm25_demo(names, mode="tokens", ngram_size=3, sample_size=5, top_n=3):
         else:
             q = make_char_ngrams(normalize(query), n=ngram_size)
 
-        print(f"[bm25 ranking] query='{query}'")
+        normalized_name = " ".join(normalize(query, return_tokens=True))
+        print(f"[bm25 ranking] query='{normalized_name}'")
         for idx, score in bm25.search_indices(q, top_n=top_n):
             # Show original business name
-            print(f"{names[idx]}: {score:.4f}")
+            normalized_name_token = " ".join(normalize(names[idx], return_tokens=True))
+            print(f"{normalized_name_token}: {score:.4f}")
         print()
 
 
-def demo(sample_size=1000):
+def demo(sample_size=None):
     # Load datasets (limit corpus size for speed)
-    companies = random.sample(data.load_text_file("company_names"), sample_size)
-    similar = random.sample(data.load_text_file("similar_company_names"), sample_size)
+    if sample_size is None:
+        words = data.load_text_file("companies")
+        overlaps = data.load_text_file("company_overlaps")
+        spelling_variations = data.load_text_file("company_variations")
+    else:
+        words = random.sample(data.load_text_file("companies"), sample_size)
+        overlaps = random.sample(data.load_text_file("company_overlaps"), sample_size)
+        spelling_variations = random.sample(data.load_text_file("company_variations"), sample_size)
 
-    print("\n===================================")
-    print("Demo company names (BM25 tokens)")
-    bm25_demo(companies, mode="tokens", sample_size=5, top_n=3)
+    print()
+    print("bm25 normal demo")
+    print("--------------------------------")
+    bm25_demo(words, mode="tokens", sample_size=2, top_n=3)
+    bm25_demo(words, mode="tokens", ngram_size=3, sample_size=2, top_n=3)
+    print()
 
-    print("\n===================================")
-    print("Demo company names (BM25 ngrams)")
-    bm25_demo(companies, mode="ngrams", ngram_size=3, sample_size=5, top_n=3)
+    print()
+    print("bm25 overlap demo")
+    print("--------------------------------")
+    bm25_demo(overlaps, mode="tokens", sample_size=2, top_n=3)
+    bm25_demo(overlaps, mode="ngrams", ngram_size=3, sample_size=2, top_n=3)
+    print()
 
-    print("\n===================================")
-    print("Demo similar names (BM25 ngrams)")
-    bm25_demo(similar, mode="ngrams", ngram_size=3, sample_size=5, top_n=3)
+    print()
+    print("bm25 spelling variations demo")
+    print("--------------------------------")
+    bm25_demo(spelling_variations, mode="tokens", sample_size=2, top_n=3)
+    bm25_demo(spelling_variations, mode="ngrams", ngram_size=3, sample_size=2, top_n=3)
+    print()
 
 
 if __name__ == "__main__":
     print()
     print(
         """
-        BM25
-            An improved version of TF-IDF that not only scores word importance but also accounts for document length and how often a word appears before it stops adding much value.
-            It’s designed specifically for ranking search results more effectively.
+BM25
 
-        Tiny Example:
+An improved version of TF-IDF that not only scores word importance but also accounts for document length and how often a word appears before it stops adding much value.
+It’s designed specifically for ranking search results more effectively.
 
-            Documents:
-                doc1 = "urgent care center"
-                doc2 = "medical care clinic"
-
-            Step 1: tokenize and normalize
-                doc1 tokens: ['urgent', 'care', 'center']
-                doc2 tokens: ['medical', 'care', 'clinic']
-
-            Step 2: compute BM25 score for a query
-                Query: "urgent care"
-                For doc1:
-                    'urgent' appears once → weighted score based on frequency and doc length
-                    'care' appears once → weighted score
-                    Total BM25 score = sum of weighted scores
-                For doc2:
-                    'urgent' not present → contributes 0
-                    'care' appears once → weighted score
-                    Total BM25 score lower than doc1
-
-        Trigrams: measures surface-level string overlap
-        Tokens: measures semantic / word-level overlap
+Trigrams: measures surface-level string overlap
+Tokens: measures semantic / word-level overlap
     """
     )
     print()
-    demo(sample_size=2000)
+    demo()
