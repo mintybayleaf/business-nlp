@@ -158,14 +158,18 @@ def vector_space_demo(names, tokens=False, file_name=None):
 # that things that are ‘neighbors’ in the original space stay neighbors in the map
 
 if __name__ == "__main__":
-    company_names = data.load_text_file("company_overlaps")
-    vector_space_demo(company_names, tokens=True, file_name="overlaps")
-    vector_space_demo(company_names, tokens=False, file_name="overlaps")
+    normal_names = data.load_text_file("companies")
+    vector_space_demo(normal_names, tokens=True, file_name="companies")
+    vector_space_demo(normal_names, tokens=False, file_name="companies")
 
-    similar_names = data.load_text_file("company_variations")
-    vector_space_demo(similar_names, tokens=True, file_name="spelling variations")
-    vector_space_demo(similar_names, tokens=False, file_name="spelling variations")
+    # company_names = data.load_text_file("company_overlaps")
+    # vector_space_demo(company_names, tokens=True, file_name="overlaps")
+    # vector_space_demo(company_names, tokens=False, file_name="overlaps")
 
-    semantic_names = data.load_text_file("semantics")
-    vector_space_demo(semantic_names, tokens=True, file_name="semantic")
-    vector_space_demo(semantic_names, tokens=False, file_name="semantic")
+    # similar_names = data.load_text_file("company_variations")
+    # vector_space_demo(similar_names, tokens=True, file_name="spelling variations")
+    # vector_space_demo(similar_names, tokens=False, file_name="spelling variations")
+
+    # semantic_names = data.load_text_file("semantics")
+    # vector_space_demo(semantic_names, tokens=True, file_name="semantic")
+    # vector_space_demo(semantic_names, tokens=False, file_name="semantic")
