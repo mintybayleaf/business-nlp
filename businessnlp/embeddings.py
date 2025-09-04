@@ -5,7 +5,7 @@ import numpy as np
 import random
 
 from businessnlp.normalize import normalize
-import businessnlp.sql as sql
+import businessnlp.duck as duck
 import businessnlp.data as data
 from businessnlp.graph import plot_vectors_2d
 
@@ -80,10 +80,10 @@ def embeddings_demo(names, mode="tokens", ngram_size=3, sample_size=5, top_n=10)
     vectors, names = generate_embeddings(names, mode=mode, ngram_size=ngram_size)
 
     table_name = f"embeddings_demo_{mode}"
-    sql.setup_table(table_name, vectors[0].size)
+    duck.setup_table(table_name, vectors[0].size)
     for name, vector in zip(names, vectors):
         normalized_name = " ".join(normalize(name, return_tokens=True))
-        sql.insert_np_array(table_name, normalized_name, vector)
+        duck.insert_np_array(table_name, normalized_name, vector)
 
     sample_indices = random.sample(range(len(names)), min(sample_size, len(names)))
     for idx in sample_indices:
@@ -91,7 +91,7 @@ def embeddings_demo(names, mode="tokens", ngram_size=3, sample_size=5, top_n=10)
         normalized_query_name = " ".join(normalize(query_name, return_tokens=True))
         query_vector = vectors[idx]
         print(f"\n[cosine distance] query='{normalized_query_name}'")
-        for result in sql.cosine_distance_nearest_vectors(
+        for result in duck.cosine_distance_nearest_vectors(
             table_name, query_vector, top_n
         ):
             print(result)

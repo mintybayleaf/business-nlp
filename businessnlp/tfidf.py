@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 from businessnlp.normalize import normalize, make_ngrams
-import businessnlp.sql as sql
+import businessnlp.duck as duck
 import businessnlp.data as data
 from businessnlp.graph import plot_vectors_2d
 
@@ -87,17 +87,17 @@ def tfidf_demo(names, query_size=2):
     vectors, vocabulary = tfidf(names, mode="tokens")
 
     table_name = "tfidf_demo_tokens"
-    sql.setup_table(table_name, len(vocabulary))
+    duck.setup_table(table_name, len(vocabulary))
     for name, vector in zip(names, vectors):
         normalized_name = " ".join(normalize(name, return_tokens=True))
-        sql.insert_np_array(table_name, normalized_name, vector)
+        duck.insert_np_array(table_name, normalized_name, vector)
 
     sample_indices = random.sample(list(range(len(names))), query_size)
     for idx in sample_indices:
         name, vector = names[idx], vectors[idx]
         normalized_name = " ".join(normalize(name, return_tokens=True))
         print(f"\n[cosine distance] query='{normalized_name}'")
-        for result in sql.cosine_distance_nearest_vectors(table_name, vector, 3):
+        for result in duck.cosine_distance_nearest_vectors(table_name, vector, 3):
             print(result)
 
     # N-grams (trigram mode)
@@ -105,16 +105,16 @@ def tfidf_demo(names, query_size=2):
     vectors, vocabulary = tfidf(names, mode="ngrams", ngram_size=3)
 
     table_name = "tfidf_demo_ngrams"
-    sql.setup_table(table_name, len(vocabulary))
+    duck.setup_table(table_name, len(vocabulary))
     for name, vector in zip(names, vectors):
         normalized_name = " ".join(normalize(name, return_tokens=True))
-        sql.insert_np_array(table_name, normalized_name, vector)
+        duck.insert_np_array(table_name, normalized_name, vector)
 
     for idx in sample_indices:
         name, vector = names[idx], vectors[idx]
         normalized_name = " ".join(normalize(name, return_tokens=True))
         print(f"\n[cosine distance] query='{normalized_name}'")
-        for result in sql.cosine_distance_nearest_vectors(table_name, vector, 3):
+        for result in duck.cosine_distance_nearest_vectors(table_name, vector, 3):
             print(result)
 
 
