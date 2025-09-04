@@ -1,4 +1,4 @@
-# Buisness Name NLP Experiments
+# Business Name NLP Experiments
 
 Higher level string manipulation and processing (e.g NLP) for business names.
 
